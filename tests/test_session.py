@@ -132,6 +132,42 @@ class TestBuildToolSignature:
         assert _build_tool_signature("x.y", schema) == "x.y(flag=false)"
 
 
+class TestSavePartialResponse:
+    def setup_method(self):
+        self.config = ShellConfig(
+            llm=LlmConfig(provider="ollama", model="test", think=False),
+            system_prompt="Test.",
+        )
+        self.session = ChatSession(self.config)
+
+    def test_saves_partial_content(self):
+        self.session.messages.append({"role": "user", "content": "hello"})
+        self.session.save_partial_response("partial answer")
+        last = self.session.messages[-1]
+        assert last["role"] == "assistant"
+        assert "partial answer" in last["content"]
+        assert "[interrupted]" in last["content"]
+
+    def test_skips_empty_content(self):
+        self.session.messages.append({"role": "user", "content": "hello"})
+        before = len(self.session.messages)
+        self.session.save_partial_response("")
+        assert len(self.session.messages) == before
+
+    def test_skips_whitespace_only(self):
+        self.session.messages.append({"role": "user", "content": "hello"})
+        before = len(self.session.messages)
+        self.session.save_partial_response("   \n  ")
+        assert len(self.session.messages) == before
+
+    def test_no_duplicate_if_assistant_already_present(self):
+        self.session.messages.append({"role": "user", "content": "hello"})
+        self.session.messages.append({"role": "assistant", "content": "full reply"})
+        before = len(self.session.messages)
+        self.session.save_partial_response("partial")
+        assert len(self.session.messages) == before
+
+
 class TestTruncation:
     def test_tool_result_truncation(self):
         """Verify max_tool_result is respected."""

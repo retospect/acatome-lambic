@@ -108,6 +108,22 @@ class ChatSession:
             "tools": len(self.mcp.enabled_tool_schemas()),
         }
 
+    def save_partial_response(self, content: str) -> None:
+        """Save a partial assistant response to history (e.g. after Ctrl-C).
+
+        If the last message is already an assistant message, do nothing
+        (the turn completed normally before the interrupt was caught).
+        """
+        content = content.strip()
+        if not content:
+            return
+        # Only add if the last message isn't already an assistant reply
+        if self.messages and self.messages[-1].get("role") == "assistant":
+            return
+        self.messages.append(
+            {"role": "assistant", "content": content + "\n\n[interrupted]"}
+        )
+
     async def turn(self, user_input: str) -> AsyncIterator[TurnEvent]:
         """Process one user turn. Yields TurnEvents for the TUI."""
         # Check for slash commands

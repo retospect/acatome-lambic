@@ -139,7 +139,8 @@ class Shell:
                             HTML("<b><ansigreen>› </ansigreen></b>")
                         ),
                     )
-                except EOFError:
+                except (EOFError, KeyboardInterrupt):
+                    # Ctrl-D or Ctrl-C at prompt → exit
                     break
 
                 user_input = user_input.strip()
@@ -171,6 +172,8 @@ class Shell:
         """Process one user turn, rendering events to the terminal.
 
         Returns '__MORE__' if /more was invoked, None otherwise.
+        Ctrl-C during streaming interrupts cleanly: partial response is
+        saved to history and the prompt returns.
         """
         assert self.session is not None
 
@@ -178,64 +181,70 @@ class Shell:
         live: Live | None = None
         more_signal = None
 
-        async for event in self.session.turn(user_input):
-            if event.kind == "text":
-                if event.data == "__QUIT__":
+        try:
+            async for event in self.session.turn(user_input):
+                if event.kind == "text":
+                    if event.data == "__QUIT__":
+                        self._stop_live(live, md_buffer)
+                        self.console.print("[dim]Goodbye.[/dim]")
+                        raise SystemExit(0)
+
+                    if event.data == "__MORE__":
+                        more_signal = "__MORE__"
+                        continue
+
+                    md_buffer += event.data
+                    if live is None:
+                        live = Live(
+                            Markdown(md_buffer),
+                            console=self.console,
+                            refresh_per_second=4,
+                        )
+                        live.start()
+                    else:
+                        live.update(Markdown(md_buffer))
+
+                elif event.kind == "tool_result":
                     self._stop_live(live, md_buffer)
-                    self.console.print("[dim]Goodbye.[/dim]")
-                    raise SystemExit(0)
+                    live = None
+                    md_buffer = ""
+                    self._print_tool_result(event.data)
 
-                if event.data == "__MORE__":
-                    more_signal = "__MORE__"
-                    continue
-
-                md_buffer += event.data
-                if live is None:
-                    live = Live(
-                        Markdown(md_buffer),
-                        console=self.console,
-                        refresh_per_second=4,
+                elif event.kind == "thinking":
+                    self._stop_live(live, md_buffer)
+                    live = None
+                    md_buffer = ""
+                    self.console.print(
+                        Panel(
+                            Text(event.data[:500], style="dim italic"),
+                            title="[dim]thinking[/dim]",
+                            border_style="dim",
+                            expand=False,
+                        )
                     )
-                    live.start()
-                else:
-                    live.update(Markdown(md_buffer))
 
-            elif event.kind == "tool_result":
-                self._stop_live(live, md_buffer)
-                live = None
-                md_buffer = ""
-                self._print_tool_result(event.data)
+                elif event.kind == "error":
+                    self._stop_live(live, md_buffer)
+                    live = None
+                    md_buffer = ""
+                    self.console.print(f"[bold red]Error:[/bold red] {event.data}")
 
-            elif event.kind == "thinking":
-                self._stop_live(live, md_buffer)
-                live = None
-                md_buffer = ""
-                self.console.print(
-                    Panel(
-                        Text(event.data[:500], style="dim italic"),
-                        title="[dim]thinking[/dim]",
-                        border_style="dim",
-                        expand=False,
-                    )
-                )
+                elif event.kind == "usage":
+                    self._stop_live(live, md_buffer)
+                    live = None
+                    md_buffer = ""
+                    self._print_usage(event.data)
 
-            elif event.kind == "error":
-                self._stop_live(live, md_buffer)
-                live = None
-                md_buffer = ""
-                self.console.print(f"[bold red]Error:[/bold red] {event.data}")
+                elif event.kind == "done":
+                    self._stop_live(live, md_buffer)
+                    live = None
+                    md_buffer = ""
+                    self.console.print()  # blank line after response
 
-            elif event.kind == "usage":
-                self._stop_live(live, md_buffer)
-                live = None
-                md_buffer = ""
-                self._print_usage(event.data)
-
-            elif event.kind == "done":
-                self._stop_live(live, md_buffer)
-                live = None
-                md_buffer = ""
-                self.console.print()  # blank line after response
+        except KeyboardInterrupt:
+            self._stop_live(live, md_buffer)
+            self.session.save_partial_response(md_buffer)
+            self.console.print("\n[dim italic]  ⏎ interrupted[/dim italic]\n")
 
         return more_signal
 
