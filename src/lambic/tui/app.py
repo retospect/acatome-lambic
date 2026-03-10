@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import signal
 from typing import Any
 
 from prompt_toolkit import PromptSession
@@ -123,6 +124,7 @@ class Shell:
 
     async def _run_async(self) -> None:
         self.session = ChatSession(self.config)
+        self._turn_task: asyncio.Task | None = None
 
         # Connect
         self.console.print(
@@ -145,10 +147,14 @@ class Shell:
             multiline=True,
         )
 
+        # Install SIGINT handler that cancels the current turn task
+        loop = asyncio.get_event_loop()
+        loop.add_signal_handler(signal.SIGINT, self._on_sigint)
+
         try:
             while True:
                 try:
-                    user_input = await asyncio.get_event_loop().run_in_executor(
+                    user_input = await loop.run_in_executor(
                         None,
                         lambda: prompt_session.prompt(
                             HTML("<b><ansigreen>› </ansigreen></b>")
@@ -166,18 +172,47 @@ class Shell:
                 if not user_input:
                     continue
 
-                result = await self._process_turn(user_input)
+                result = await self._run_turn(user_input)
                 if result == "__MORE__":
-                    await self._process_turn("Continue from where you left off.")
+                    await self._run_turn(
+                        "Continue from where you left off."
+                    )
                     # Restore max_tokens if it was temporarily changed
                     session = self.session
                     if session and hasattr(session, "_more_restore_tokens"):
                         if session._more_extra:
-                            session.config.llm.max_tokens = session._more_restore_tokens
-                            session.llm.config.max_tokens = session._more_restore_tokens
+                            session.config.llm.max_tokens = (
+                                session._more_restore_tokens
+                            )
+                            session.llm.config.max_tokens = (
+                                session._more_restore_tokens
+                            )
 
         finally:
+            loop.remove_signal_handler(signal.SIGINT)
             await self.session.close()
+
+    async def _run_turn(self, user_input: str) -> str | None:
+        """Run _process_turn as a cancellable child task."""
+        self._turn_task = asyncio.create_task(self._process_turn(user_input))
+        try:
+            return await self._turn_task
+        except asyncio.CancelledError:
+            # CancelledError escaped _process_turn (rare edge case)
+            if self.session:
+                self.session.save_partial_response("")
+            self.console.print("\n[dim italic]  ⏎ interrupted[/dim italic]\n")
+            return None
+        finally:
+            self._turn_task = None
+
+    def _on_sigint(self) -> None:
+        """Handle SIGINT (Ctrl-C) inside the event loop."""
+        if self._turn_task is not None:
+            self._turn_task.cancel()
+        else:
+            # At the prompt — print hint (prompt_toolkit handles the rest)
+            self.console.print("\n[dim]  /quit to exit[/dim]")
 
     def _stop_live(self, live: Live | None, md_buffer: str) -> None:
         """Finalize and stop a Live markdown render."""
@@ -260,7 +295,7 @@ class Shell:
                     md_buffer = ""
                     self.console.print()  # blank line after response
 
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, asyncio.CancelledError):
             self._stop_live(live, md_buffer)
             self.session.save_partial_response(md_buffer)
             self.console.print("\n[dim italic]  ⏎ interrupted[/dim italic]\n")
