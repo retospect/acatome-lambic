@@ -232,7 +232,7 @@ class ChatSession:
                             should_autocontinue = True
 
                     log.info(
-                        "stop_reason=%s autocontinue=%s count=%d/%d",
+                        "stop_reason=%s continuing=%s count=%d/%d",
                         final_response.stop_reason,
                         should_autocontinue,
                         autocontinue_count,
