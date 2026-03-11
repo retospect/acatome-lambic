@@ -41,7 +41,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    from lambic.core.config import ShellConfig
+    from acatome_lambic.core.config import ShellConfig
 
     # Load config
     config_path = args.config or ShellConfig.default_path()
@@ -78,7 +78,7 @@ def main() -> None:
         handlers=handlers or None,
     )
 
-    from lambic.tui.app import Shell
+    from acatome_lambic.tui.app import Shell
 
     shell = Shell(config=config)
     shell.run()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from lambic.core.mcp_client import McpClientPool, RegisteredTool
+from acatome_lambic.core.mcp_client import McpClientPool, RegisteredTool
 
 
 class TestRegisteredTool:

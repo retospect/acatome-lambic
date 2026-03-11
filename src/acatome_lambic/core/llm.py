@@ -13,7 +13,7 @@ from typing import Any, AsyncIterator
 
 import httpx
 
-from lambic.core.config import LlmConfig
+from acatome_lambic.core.config import LlmConfig
 
 log = logging.getLogger("lambic.llm")
 

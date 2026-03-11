@@ -9,9 +9,9 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Callable
 
-from lambic.core.config import LlmConfig, ShellConfig
-from lambic.core.llm import LlmClient, LlmResponse, ToolCall
-from lambic.core.mcp_client import McpClientPool
+from acatome_lambic.core.config import LlmConfig, ShellConfig
+from acatome_lambic.core.llm import LlmClient, LlmResponse, ToolCall
+from acatome_lambic.core.mcp_client import McpClientPool
 
 log = logging.getLogger("lambic.session")
 

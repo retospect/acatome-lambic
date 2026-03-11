@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from lambic.core.config import LlmConfig, ShellConfig
-from lambic.core.session import ChatSession, ToolResult, _build_tool_signature
-from lambic.core.llm import ToolCall
+from acatome_lambic.core.config import LlmConfig, ShellConfig
+from acatome_lambic.core.session import ChatSession, ToolResult, _build_tool_signature
+from acatome_lambic.core.llm import ToolCall
 
 
 class TestCommands:

@@ -12,7 +12,7 @@ from typing import Any
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
-from lambic.core.config import McpServer
+from acatome_lambic.core.config import McpServer
 
 log = logging.getLogger("lambic.mcp")
 

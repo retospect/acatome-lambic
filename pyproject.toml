@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "lambic"
+name = "acatome-lambic"
 version = "0.2.0"
 description = "MCP-aware LLM shell with provider switching"
 readme = "README.md"
@@ -21,10 +21,10 @@ litellm = ["litellm>=1.0"]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "black>=24.0"]
 
 [project.scripts]
-lambic = "lambic.cli:main"
+acatome-lambic = "acatome_lambic.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/lambic"]
+packages = ["src/acatome_lambic"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -41,6 +41,6 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
 [[tool.bumpversion.files]]
-filename = "src/lambic/__init__.py"
+filename = "src/acatome_lambic/__init__.py"
 search = '__version__ = "{current_version}"'
 replace = '__version__ = "{new_version}"'

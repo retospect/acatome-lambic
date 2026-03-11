@@ -19,8 +19,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
-from lambic.core.config import ShellConfig
-from lambic.core.session import ChatSession, TurnEvent
+from acatome_lambic.core.config import ShellConfig
+from acatome_lambic.core.session import ChatSession, TurnEvent
 
 log = logging.getLogger("lambic.tui")
 
@@ -116,7 +116,7 @@ class Shell:
         **kwargs: Any,
     ) -> None:
         if config is None:
-            from lambic.core.config import LlmConfig, McpServer
+            from acatome_lambic.core.config import LlmConfig, McpServer
 
             llm = model if isinstance(model, LlmConfig) else LlmConfig()
             svrs = servers or []

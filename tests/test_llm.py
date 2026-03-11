@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from lambic.core.llm import (
+from acatome_lambic.core.llm import (
     LlmClient,
     LlmResponse,
     ToolCall,
     tools_to_ollama,
 )
-from lambic.core.config import LlmConfig
+from acatome_lambic.core.config import LlmConfig
 
 
 class TestToolConversion:

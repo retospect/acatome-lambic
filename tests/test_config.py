@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from lambic.core.config import LlmConfig, McpServer, ShellConfig
+from acatome_lambic.core.config import LlmConfig, McpServer, ShellConfig
 
 
 class TestLlmConfig:
