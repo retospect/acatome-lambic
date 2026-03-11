@@ -226,17 +226,19 @@ class ChatSession:
                     if self.autocontinue and autocontinue_count < MAX_AUTOCONTINUE:
                         if truncated:
                             should_autocontinue = True
-                        elif tools and content:
+                        elif tools and collected_content:
                             # Model had tools available but chose to output
                             # text instead — nudge it to act
                             should_autocontinue = True
 
                     log.info(
-                        "stop_reason=%s continuing=%s count=%d/%d",
+                        "stop_reason=%s continuing=%s count=%d/%d has_tools=%s text_len=%d",
                         final_response.stop_reason,
                         should_autocontinue,
                         autocontinue_count,
                         MAX_AUTOCONTINUE,
+                        bool(tools),
+                        len(collected_content),
                     )
 
                     yield TurnEvent(
