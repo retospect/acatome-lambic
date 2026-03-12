@@ -60,6 +60,7 @@ class ShellConfig:
     task_reminder_commands: dict[str, Callable[[str], str]] = field(
         default_factory=dict
     )
+    custom_commands: dict[str, Callable[[str], str]] = field(default_factory=dict)
 
     @classmethod
     def from_toml(cls, path: str | Path) -> ShellConfig:

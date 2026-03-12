@@ -519,8 +519,15 @@ class ChatSession:
             ]
             for cmd_name in sorted(self.config.message_commands):
                 lines.append(f"/{cmd_name} <prompt>          → LLM")
+            for cmd_name in sorted(self.config.custom_commands):
+                lines.append(f"/{cmd_name}")
             lines.append("```")
             return "\n".join(lines)
+
+        # App-specific custom commands
+        bare = verb.lstrip("/")
+        if bare in self.config.custom_commands:
+            return self.config.custom_commands[bare](cmd)
 
         return f"Unknown command: {verb}. Type /help for commands."
 

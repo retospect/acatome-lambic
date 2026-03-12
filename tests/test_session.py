@@ -200,6 +200,32 @@ class TestTaskReminder:
         assert session.task_reminder == ""
 
 
+class TestCustomCommands:
+    def test_custom_command_dispatched(self):
+        config = ShellConfig(
+            system_prompt="Test.",
+            custom_commands={"db": lambda cmd: "db info here"},
+        )
+        session = ChatSession(config)
+        result = session._handle_command("/db")
+        assert result == "db info here"
+
+    def test_custom_command_shown_in_help(self):
+        config = ShellConfig(
+            system_prompt="Test.",
+            custom_commands={"db": lambda cmd: ""},
+        )
+        session = ChatSession(config)
+        result = session._handle_command("/help")
+        assert "/db" in result
+
+    def test_unknown_without_custom(self):
+        config = ShellConfig(system_prompt="Test.")
+        session = ChatSession(config)
+        result = session._handle_command("/db")
+        assert "Unknown command" in result
+
+
 class TestTruncation:
     def test_tool_result_truncation(self):
         """Verify max_tool_result is respected."""
