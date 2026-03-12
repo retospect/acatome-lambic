@@ -62,6 +62,20 @@ class _SlashCompleter(Completer):
             return []
         return list(session.mcp._tools.keys())
 
+    def _extra_commands(self) -> list[tuple[str, str]]:
+        """Get custom and message commands from the live session config."""
+        if self._session_ref is None:
+            return []
+        session = self._session_ref()
+        if session is None:
+            return []
+        extras = []
+        for name in session.config.custom_commands:
+            extras.append((f"/{name}", "custom command"))
+        for name in session.config.message_commands:
+            extras.append((f"/{name}", "→ LLM"))
+        return extras
+
     def get_completions(self, document, complete_event):
         text = document.text_before_cursor.lstrip()
         if not text.startswith("/"):
@@ -69,7 +83,8 @@ class _SlashCompleter(Completer):
 
         if " " not in text:
             # First word — complete command name
-            for cmd, desc in _SLASH_COMMANDS:
+            all_commands = _SLASH_COMMANDS + self._extra_commands()
+            for cmd, desc in all_commands:
                 if cmd.startswith(text):
                     yield Completion(
                         cmd,

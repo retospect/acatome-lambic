@@ -1,4 +1,4 @@
-# lambic
+# acatome-lambic
 
 MCP-aware LLM shell with provider switching.
 
@@ -8,23 +8,18 @@ and provides a terminal chat interface with tool calling.
 ## Usage
 
 ```python
-from lambic import Shell, LlmConfig, McpServer
+from acatome_lambic.tui.app import Shell
+from acatome_lambic.core.config import LlmConfig, McpServer, ShellConfig
 
-shell = Shell(
-    model=LlmConfig(provider="ollama", model="qwen3.5:9b"),
+config = ShellConfig(
+    llm=LlmConfig(provider="ollama", model="qwen3.5:9b"),
     servers=[
-        McpServer("acatome", cmd=["uv", "run", "acatome-mcp"]),
-        McpServer("precis", cmd=["uv", "run", "precis"]),
+        McpServer(name="acatome", cmd=["uv", "run", "acatome-mcp"]),
+        McpServer(name="precis", cmd=["uv", "run", "precis"]),
     ],
     system_prompt="You are a research assistant.",
 )
-shell.run()
-```
-
-## CLI
-
-```bash
-lambic --config path/to/config.toml
+Shell(config).run()
 ```
 
 ## Commands
@@ -37,4 +32,9 @@ lambic --config path/to/config.toml
 - `/expand <call_id>` — show full (untruncated) tool result
 - `/status` — show session info
 - `/clear` — clear message history
+- `/help` — show command help
 - `/quit` — exit
+
+Applications can register custom commands (`custom_commands`) and
+LLM-routed message commands (`message_commands`) via `ShellConfig`.
+All registered commands appear in tab autocomplete.

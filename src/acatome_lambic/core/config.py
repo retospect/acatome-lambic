@@ -16,7 +16,7 @@ class LlmConfig:
     model: str = "qwen3.5:9b"
     think: bool = True
     ollama_url: str = "http://localhost:11434"
-    max_tokens: int = 16384
+    max_tokens: int = 100_000
     temperature: float = 0.7
     api_keys: dict[str, str] = field(default_factory=dict)
 

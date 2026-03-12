@@ -155,7 +155,7 @@ class ChatSession:
                 # Fall through to normal LLM interaction
 
         # Check for slash commands
-        elif user_input.startswith("/"):
+        if user_input.startswith("/"):
             result = self._handle_command(user_input)
             yield TurnEvent("command", result)
             yield TurnEvent("done")
